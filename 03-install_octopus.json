@@ -50,10 +50,6 @@
         10,
         15
       ]
-    },
-    {
-      "type": "windows-restart",
-      "restart_timeout": "1h"
     }
   ],
   "variables": {

@@ -16,7 +16,7 @@ Write-Output "Installing SQL"
 }
 
 
-Function Invoke-OctoServer {
+Function Invoke-OctoServerInstall {
 choco install octopusdeploy --confirm
 
 }
