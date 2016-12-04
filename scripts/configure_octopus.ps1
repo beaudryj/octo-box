@@ -26,7 +26,7 @@ netsh advfirewall firewall add rule name="Open Port 80" dir=in action=allow prot
 
 $ConfScript | Out-File "C:\Scripts\Configure_octopus.ps1"
 
-$A = New-ScheduledTaskAction –Execute "Powershell.exe -Command "&{C:\Scripts\Configure_octopus.ps1}""
+$A = New-ScheduledTaskAction –Execute "Powershell.exe -Command "& {C:\Scripts\Configure_octopus.ps1}""
 $T = New-ScheduledTaskTrigger -AtStartup
 $P = "Administrator"
 $S = New-ScheduledTaskSettingsSet
