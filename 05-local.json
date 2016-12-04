@@ -39,6 +39,10 @@
     {
       "type": "powershell",
       "script": "scripts/save_shutdown_command.ps1"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/configure_octopus.ps1"
     }
   ],
   "post-processors": [
@@ -46,7 +50,7 @@
       {
         "type": "vagrant",
         "keep_input_artifact": false,
-        "output": "{{user `os_name`}}-wmf5-nocm-{{.Provider}}.box",
+        "output": "{{user `os_name`}}-wmf5-octopus-{{.Provider}}.box",
         "vagrantfile_template": "vagrantfile-windows.template"
       }
     ]

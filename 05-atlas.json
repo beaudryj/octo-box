@@ -39,6 +39,10 @@
     {
       "type": "powershell",
       "script": "scripts/save_shutdown_command.ps1"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/configure_octopus.ps1"
     }
   ],
   "post-processors": [
