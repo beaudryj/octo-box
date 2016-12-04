@@ -1,0 +1,65 @@
+{
+  "builders": [
+    {
+      "type": "virtualbox-ovf",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "4096"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "48"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "2"
+        ]
+      ],
+      "source_path": "{{user `source_path`}}",
+      "headless": "{{ user `headless` }}",
+      "communicator": "winrm",
+      "winrm_username": "administrator",
+      "winrm_password": "vagrant",
+      "winrm_timeout": "12h",
+      "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+      "shutdown_timeout": "1h",
+      "output_directory": "./output-{{user `os_name`}}-{{ user `image_name`}}/",
+      "vm_name": "{{user `os_name`}}-{{ user `image_name`}}",
+      "guest_additions_mode": "disable"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "powershell",
+      "script": "scripts/install_octopus_deploy.ps1",
+      "elevated_user": "administrator",
+      "elevated_password": "vagrant",
+      "valid_exit_codes": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        10,
+        15
+      ]
+    },
+    {
+      "type": "windows-restart",
+      "restart_timeout": "1h"
+    }
+  ],
+  "variables": {
+    "os_name": "",
+    "headless": "true",
+    "source_path": "",
+    "image_name": "octopus"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "2048"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "48"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "2"
+        ]
+      ],
+      "vboxmanage_post": [
+        [
+          "storageattach",
+          "{{.Name}}",
+          "--storagectl",
+          "IDE Controller",
+          "--port",
+          "1",
+          "--device",
+          "0",
+          "--medium",
+          "none"
+        ]
+      ],
+      "output_directory": "./output-{{ user `os_name` }}-base/",
+      "vm_name": "{{ user `os_name` }}-base",
+      "guest_additions_mode": "attach",
+      "guest_os_type": "{{ user `guest_os_type` }}",
+      "headless": "{{ user `headless` }}",
+      "iso_url": "{{ user `iso_url` }}",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "sha1",
+      "communicator": "winrm",
+      "winrm_username": "vagrant",
+      "winrm_password": "vagrant",
+      "winrm_timeout": "12h",
+      "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+      "shutdown_timeout": "1h",
+      "floppy_files": [
+        "answer_files/{{ user `os_name` }}/Autounattend.xml",
+        "floppy/winrm.ps1"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "powershell",
+      "script": "scripts/install_oracle_guest_additions.ps1",
+      "elevated_user": "vagrant",
+      "elevated_password": "vagrant",
+      "environment_vars": [
+        "install_vbox_tools={{user `install_vbox_tools`}}"
+      ]
+    }
+  ],
+  "variables": {
+    "os_name": "",
+    "headless": "true",
+    "iso_checksum": "",
+    "iso_url": "",
+    "guest_os_type": "",
+    "install_vbox_tools": ""
+  }
+}
