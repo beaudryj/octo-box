@@ -1,9 +1,13 @@
 $ConfScript = @"
-Write-Output "Creating DB for Octopus"
-`$SQL = "C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\tools\Binn\SQLCMD.exe"
 
-Start-Process `$SQL '-Q "CREATE DATABASE Octo;"'
+function Invoke-InstallSQL{
+Write-Output "Installing SQL"
+& "C:\SqlExpr\Setup.exe" /Q /ACTION=Install /FEATURES=SQLEngine /INSTANCENAME=MSSQLSERVER /SQLSVCACCOUNT="vagrant" /SQLSVCPASSWORD="vagrant" /SQLSYSADMINACCOUNTS="vagrant" /AGTSVCACCOUNT="NT AUTHORITY\System" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS 
 
+Remove-Item "C:\SqlExpr" -Force
+}
+
+function Invoke-ConfigureOctopus{
 `$Exe = "C:\Program Files\Octopus Deploy\Octopus\Octopus.Server.exe" 
 
 Write-Output "Configuring Instance"
@@ -22,13 +26,18 @@ Start-Process `$Exe 'service --instance="OctopusServer" --install --reconfigure 
 
 Write-Output "Adding Firewall Exception"
 netsh advfirewall firewall add rule name="Open Port 80" dir=in action=allow protocol=TCP localport=80
+}
+
+Invoke-InstallSQL
+
+Invoke-ConfigureOctopus
+
 "@
 
 $ConfScript | Out-File "C:\Scripts\Configure_octopus.ps1"
 
-$A = New-ScheduledTaskAction –Execute "Powershell.exe -Command "& {C:\Scripts\Configure_octopus.ps1}""
-$T = New-ScheduledTaskTrigger -AtStartup
-$P = "Administrator"
-$S = New-ScheduledTaskSettingsSet
-$D = New-ScheduledTask -Action $A -Principal $P -Trigger $T -Settings $S
-Register-ScheduledTask T1 -InputObject $D
+
+$secpasswd = ConvertTo-SecureString vagrant -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ("Administrator", $secpasswd)
+
+Register-ScheduledJob –Name "InstallOcto" –FilePath "C:\Scripts\Configure_octopus.ps1" -Credential $credential -MaxResultCount 30 -ScheduledJobOption (New-ScheduledJobOption –DoNotAllowDemandStart) -Trigger (New-JobTrigger –AtStartup)
