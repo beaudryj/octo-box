@@ -1,5 +1,9 @@
 # Octo Box
 
+Version 1.0.0
+
+Date: 12/4/2016
+
 ## Packer build for Octo Box 
 
 This Repository is used for generating an Octopus Deploy Server image using packer. 
