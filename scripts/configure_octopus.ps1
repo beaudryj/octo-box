@@ -30,7 +30,8 @@ write-output "Finished Extracting SQL Download- `$Time" | Out-File -Append C:\lo
 `$time = Get-Date
 write-output "Installing SQL - `$Time" | Out-File -Append C:\logs.txt 
 Write-Output "Installing SQL"
-& "C:\SqlExpr\Setup.exe" /Q /ACTION=Install /FEATURES=SQLEngine /INSTANCENAME=MSSQLSERVER /SQLSVCACCOUNT="vagrant" /SQLSVCPASSWORD="vagrant" /SQLSYSADMINACCOUNTS="vagrant" /AGTSVCACCOUNT="NT AUTHORITY\System" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS 
+Start-Process `$SQL '/Q /ACTION=Install /FEATURES=SQLEngine /INSTANCENAME=MSSQLSERVER /SQLSVCACCOUNT="vagrant" /SQLSVCPASSWORD="vagrant" /SQLSYSADMINACCOUNTS="vagrant" /AGTSVCACCOUNT="NT AUTHORITY\System" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS' -nonewwindow -wait -Verb RunAs | Out-File -Append C:\Logs.txt
+
 
 `$time = Get-Date
 write-output "Finished Installing SQL - `$Time" | Out-File -Append C:\logs.txt 
