@@ -33,7 +33,7 @@ write-output "Finished Extracting SQL Download- `$Time" | Out-File -Append C:\lo
 write-output "Installing SQL - `$Time" | Out-File -Append C:\logs.txt 
 Write-Output "Installing SQL"
 `$InstallFlags = '/Q /ACTION=Install /FEATURES=SQLEngine /INSTANCENAME=MSSQLSERVER /SQLSVCACCOUNT=`"vagrant`" /SQLSVCPASSWORD=`"vagrant`" /SQLSYSADMINACCOUNTS`="vagrant" /AGTSVCACCOUNT=`"NT AUTHORITY\System`" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS'
-Start-Process `$SQL -ArgumentList `$InstallFlags -wait -Verb RunAs | Out-File -Append C:\Logs.txt
+Start-Process `$SQL -ArgumentList `$InstallFlags -wait -Verb RunAs 
 
 
 `$time = Get-Date
@@ -43,29 +43,95 @@ write-output "Finished Installing SQL - `$Time" | Out-File -Append C:\logs.txt
 
 
 function Invoke-ConfigureOctopus{
-`$Exe = "C:\Program Files\Octopus Deploy\Octopus\Octopus.Server.exe" 
+
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
 
 `$time = Get-Date
-write-output "Configuring OctoInstance - `$Time" | Out-File -Append C:\logs.txt 
- 
+write-output "Create Octo Instance - `$Time" | Out-File -Append C:\logs.txt 
 
 Write-Output "Configuring Instance"
-Start-Process `$Exe 'create-instance --instance="OctopusServer" --config "C:\Octopus\OctopusServer.config"' -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
-Write-Output "Configuring DB/Base Settings"
+Start-Process `$Exe 'create-instance --instance="OctopusServer" --config "C:\Octopus\OctopusServer.config"' -wait -Verb RunAs   
+
+}
+
+function Invoke-OctoDBCreate{
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Creating DB for Octopus" | Out-File -Append C:\logs.txt 
+`$SQL = "C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\tools\Binn\SQLCMD.exe"
+
+Start-Process `$SQL '-Q "CREATE DATABASE Octo;"'
+
+}
+
+function Invoke-OctoDBConfig{
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Configuring DB/Base Settings" | Out-File -Append C:\logs.txt 
 
 `$ArgList = 'configure --instance "OctopusServer" --home "C:\Octopus" --storageConnectionString "Data Source=(local);Initial Catalog=Octo;Integrated Security=True;User ID=vagrant;Password=vagrant" --upgradeCheck "True" --upgradeCheckWithStatistics "True" --webAuthenticationMode "UsernamePassword" --webForceSSL "False" --webListenPrefixes "http://localhost:80/" --commsListenPort "10943"' + " --serverNodeName `$env:ComputerName"
-Start-Process `$Exe -ArgumentList `$ArgList -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
+Start-Process `$Exe -ArgumentList `$ArgList -wait -Verb RunAs 
+}
 
-Start-Process `$Exe 'database --instance "OctopusServer" --create --grant "NT AUTHORITY\SYSTEM"' -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
-Write-Output "Creating Service"
-Start-Process `$Exe 'service --instance="OctopusServer" --stop' -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
-Write-Output "Creating Admin"
-Start-Process `$Exe 'admin --instance "OctopusServer" --username "admin" --email "admin@admin.com" --password "Vagrant!"' -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
-Write-Output "Applying License"
+function Invoke-OctoDBAuth{
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-output "Configuring Auth on Octo for DB"  | Out-File -Append C:\logs.txt 
+Start-Process `$Exe 'database --instance "OctopusServer" --create --grant "NT AUTHORITY\SYSTEM"' -wait -Verb RunAs 
+}
+
+function Invoke-OctoService{
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Creating Service"| Out-File -Append C:\logs.txt 
+Start-Process `$Exe 'service --instance="OctopusServer" --stop' -wait -Verb RunAs 
+}
+
+function Invoke-OctoAdmin {
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Creating Admin" | Out-File -Append C:\logs.txt 
+Start-Process `$Exe 'admin --instance "OctopusServer" --username "admin" --email "admin@admin.com" --password "Vagrant!"' -wait -Verb RunAs 
+}
+
+function Invoke-ApplyLicense {
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Applying License" | Out-File -Append C:\logs.txt
 Start-Process `$Exe 'license --instance="OctopusServer" --licenseBase64="PExpY2Vuc2UgU2lnbmF0dXJlPSJXUzg0ZXUzUzR6MWFXRm1nY3h2NUtNUHh3RHZhMkwvVWFOTC9PRWpQdHhiWDNGMzVWVmNEMDVKeGFRaXlUY09wbU1pNVJsRGYyV3dWY2hleElHUENqdz09Ij4NCiAgPExpY2Vuc2VkVG8+VGVzdDwvTGljZW5zZWRUbz4NCiAgPExpY2Vuc2VLZXk+NDkyOTUtMDQzMzctMjg0MjMtMjI1MTk8L0xpY2Vuc2VLZXk+DQogIDxWZXJzaW9uPjIuMDwhLS0gTGljZW5zZSBTY2hlbWEgVmVyc2lvbiAtLT48L1ZlcnNpb24+DQogIDxWYWxpZEZyb20+MjAxNi0xMi0wMjwvVmFsaWRGcm9tPg0KICA8VmFsaWRUbz4yMDE3LTAxLTE2PC9WYWxpZFRvPg0KICA8UHJvamVjdExpbWl0PlVubGltaXRlZDwvUHJvamVjdExpbWl0Pg0KICA8TWFjaGluZUxpbWl0PlVubGltaXRlZDwvTWFjaGluZUxpbWl0Pg0KICA8VXNlckxpbWl0PlVubGltaXRlZDwvVXNlckxpbWl0Pg0KPC9MaWNlbnNlPg==" --wait="5000"' -Wait -Verb RunAs
-Write-Output "Restarting service"
-Start-Process `$Exe 'service --instance="OctopusServer" --install --reconfigure --start' -NoNewWindow -Wait | Out-File -Append C:\Logs.txt
+}
 
+
+function Invoke-RestartOctoService {
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
+Write-Output "Restarting service" | Out-File -Append C:\logs.txt
+Start-Process `$Exe 'service --instance="OctopusServer" --install --reconfigure --start' -wait -Verb RunAs 
+}
+
+
+function Invoke-FinalizeOctoConfig {
+[CmdletBinding()]
+param (
+[string]`$Exe
+)
 `$time = Get-Date
 write-output "Finished Configuring Octo Instance - `$Time" | Out-File -Append C:\logs.txt 
 
@@ -78,10 +144,27 @@ netsh advfirewall firewall add rule name="Open Port 80" dir=in action=allow prot
 write-output "Finished Adding Firewall Exception - `$Time" | Out-File -Append C:\logs.txt 
 }
 
+`$Exe = "C:\Program Files\Octopus Deploy\Octopus\Octopus.Server.exe" 
+
 Invoke-InstallSQL
 
-Invoke-ConfigureOctopus
+Invoke-ConfigureOctopus -Exe `$Exe
 
+Invoke-OctoDBCreate -Exe `$Exe
+
+Invoke-OctoDBConfig -Exe `$Exe
+
+Invoke-OctoDBAuth -Exe `$Exe
+
+Invoke-OctoService -Exe `$Exe
+
+Invoke-OctoAdmin -Exe `$Exe
+
+Invoke-ApplyLicense -Exe `$Exe
+
+Invoke-RestartOctoService -Exe `$Exe
+
+Invoke-FinalizeOctoConfig -Exe `$Exe
 
 `$time = Get-Date
 write-output "Job Completed - `$Time" | Out-File -Append C:\logs.txt 
