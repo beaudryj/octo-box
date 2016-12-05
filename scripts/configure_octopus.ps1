@@ -1,14 +1,47 @@
 $ConfScript = @"
 
 function Invoke-InstallSQL{
+Write-Output "Downloading SQL"
+
+New-item C:\SqlDownload -ItemType Directory -Force
+New-item C:\logs.txt 
+
+`$time = Get-Date
+write-output "Starting SQL Download - `$Time" | Out-File -Append C:\logs.txt 
+`$url = "https://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/Express%2064BIT/SQLEXPR_x64_ENU.exe"
+`$output = "C:\SqlDownload\SQLEXPR_x64_ENU.exe"
+
+write-output `$url
+write-output `$output
+
+(New-Object System.Net.WebClient).DownloadFile(`$url, `$output)
+
+`$time = Get-Date
+write-output "Finished SQL Download - `$Time" | Out-File -Append C:\logs.txt 
+
+`$time = Get-Date
+write-output "Extracting SQL Download - `$Time" | Out-File -Append C:\logs.txt 
+Write-Output "Extracting SQL Setup"
+start-process `$output "/q /x:C:\SQL\SqlExpr" -wait -verb RunAs
+
+`$time = Get-Date
+write-output "Finished Extracting SQL Download- `$Time" | Out-File -Append C:\logs.txt 
+
+`$time = Get-Date
+write-output "Installing SQL - `$Time" | Out-File -Append C:\logs.txt 
 Write-Output "Installing SQL"
 & "C:\SqlExpr\Setup.exe" /Q /ACTION=Install /FEATURES=SQLEngine /INSTANCENAME=MSSQLSERVER /SQLSVCACCOUNT="vagrant" /SQLSVCPASSWORD="vagrant" /SQLSYSADMINACCOUNTS="vagrant" /AGTSVCACCOUNT="NT AUTHORITY\System" /TCPENABLED=1 /IACCEPTSQLSERVERLICENSETERMS 
 
-Remove-Item "C:\SqlExpr" -Force
+`$time = Get-Date
+write-output "Finished Installing SQL - `$Time" | Out-File -Append C:\logs.txt 
+
 }
 
 function Invoke-ConfigureOctopus{
 `$Exe = "C:\Program Files\Octopus Deploy\Octopus\Octopus.Server.exe" 
+
+`$time = Get-Date
+write-output "Configuring OctoInstance - `$Time" | Out-File -Append C:\logs.txt 
 
 Write-Output "Configuring Instance"
 Start-Process `$Exe 'create-instance --instance="OctopusServer" --config "C:\Octopus\OctopusServer.config"' -Wait -Verb RunAs
@@ -24,14 +57,25 @@ Start-Process `$Exe 'license --instance="OctopusServer" --licenseBase64="PExpY2V
 Write-Output "Restarting service"
 Start-Process `$Exe 'service --instance="OctopusServer" --install --reconfigure --start' -Wait -Verb RunAs
 
+`$time = Get-Date
+write-output "Finished Configuring Octo Instance - `$Time" | Out-File -Append C:\logs.txt 
+
+`$time = Get-Date
+write-output "Adding Firewall Exception - `$Time" | Out-File -Append C:\logs.txt 
 Write-Output "Adding Firewall Exception"
 netsh advfirewall firewall add rule name="Open Port 80" dir=in action=allow protocol=TCP localport=80
+
+`$time = Get-Date
+write-output "Finished Adding Firewall Exception - `$Time" | Out-File -Append C:\logs.txt 
 }
 
 Invoke-InstallSQL
 
 Invoke-ConfigureOctopus
 
+
+`$time = Get-Date
+write-output "Job Completed - `$Time" | Out-File -Append C:\logs.txt 
 "@
 
 New-Item C:\Scripts\Configure_octopus.ps1 -type file -force -value $ConfScript
@@ -40,4 +84,4 @@ New-Item C:\Scripts\Configure_octopus.ps1 -type file -force -value $ConfScript
 $secpasswd = ConvertTo-SecureString vagrant -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ("Administrator", $secpasswd)
 
-Register-ScheduledJob -Name "InstallOcto" -FilePath "C:\Scripts\Configure_octopus.ps1" -Credential $credential -MaxResultcount 30 -ScheduledJobOption (New-ScheduledJobOption -DoNotAllowDemandStart) -Trigger (New-JobTrigger -AtStartup)
+Register-ScheduledJob -Name "InstallOcto" -FilePath "C:\Scripts\Configure_octopus.ps1" -Credential $credential -MaxResultcount 30 -ScheduledJobOption (New-ScheduledJobOption -RunElevated) -Trigger (New-JobTrigger -AtStartup)
