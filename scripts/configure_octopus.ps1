@@ -34,10 +34,10 @@ Invoke-ConfigureOctopus
 
 "@
 
-$ConfScript | Out-File "C:\Scripts\Configure_octopus.ps1"
+New-Item C:\Scripts\Configure_octopus.ps1 -type file -force -value $ConfScript
 
 
 $secpasswd = ConvertTo-SecureString vagrant -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ("Administrator", $secpasswd)
 
-Register-ScheduledJob –Name "InstallOcto" –FilePath "C:\Scripts\Configure_octopus.ps1" -Credential $credential -MaxResultCount 30 -ScheduledJobOption (New-ScheduledJobOption –DoNotAllowDemandStart) -Trigger (New-JobTrigger –AtStartup)
+Register-ScheduledJob -Name "InstallOcto" -FilePath "C:\Scripts\Configure_octopus.ps1" -Credential $credential -MaxResultcount 30 -ScheduledJobOption (New-ScheduledJobOption -DoNotAllowDemandStart) -Trigger (New-JobTrigger -AtStartup)
