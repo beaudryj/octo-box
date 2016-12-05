@@ -20,3 +20,4 @@ The scripts here will
     - Configure Octopus Deploy with trial license, and attach to the DB
     - Configure Firewall to allow inbound on port 80
 
+# Currently in order to get SQL installed, the Instance has a startup script that runs on power on to install SQL and then configures octopus. Once the machine is up it takes roughly (Depending on network speed) 5-15Minutes for the instance to come up
