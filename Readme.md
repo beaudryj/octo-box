@@ -22,7 +22,7 @@ The scripts here will
 
 # Credentials - 
     Box: 
-        Administratory - Vagrant 
+        Administrator - Vagrant 
         Vagrant - Vagrant 
     Octopus Deploy: 
         Admin - Vagrant! 
