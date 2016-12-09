@@ -2,7 +2,7 @@
 
 Version 1.1.0
 
-Date: 12/4/2016
+Date: 12/9/2016
 
 ## Packer build for Octo Box 
 
@@ -22,8 +22,8 @@ The scripts here will
 
 # Credentials - 
     Box: 
-        Administrator - Vagrant 
-        Vagrant - Vagrant 
+        Administrator - vagrant 
+        Vagrant - vagrant 
     Octopus Deploy: 
         Admin - Vagrant! 
 
