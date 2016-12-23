@@ -1,8 +1,7 @@
-# Octo Box
 
-Version 1.1.0
+Version 2.0.0
 
-Date: 12/9/2016
+Date: 12/23/2016
 
 ## Packer build for Octo Box 
 
